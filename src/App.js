@@ -5,17 +5,14 @@ import Ticker from "./Ticker";
 import './Ticker.css';
 
 const key = "64QGWFNZRACW300X"
-const stockFunctionBlock = "GLOBAL_QUOTE&symbol="
-const stockSuffix = ""
-const coinFunctionBlock = "CURRENCY_EXCHANGE_RATE&from_currency="
-const coinSuffix = "&to_currency=USD"
+
 
 class App extends Component {
   constructor(props){
     super(props);
     this.state = {
-      stocks: ["AAPL","GOOG","GE","WFC","NBR"],
-      coins: ["BTC", "ETH"]
+      stocks: ["AAPL","GOOG","GE","WFC","NBR","VZ"],
+      coins: ["BTC"]
     }
   }
 
@@ -38,7 +35,19 @@ class App extends Component {
             </div>
           </button>
         </div>
-        <Ticker title="stocks" items={this.state.stocks} />
+        <Ticker
+          title="stocks"
+          items={this.state.stocks}
+          query={(items) => `https://api.iextrading.com/1.0/stock/market/batch?symbols=${items.join(',')}&types=quote`}
+          rate={150}
+        />
+        <Ticker
+          title="coins"
+          items={this.state.coins}
+          query={(_) => `https://api.iextrading.com/1.0/stock/market/crypto`}
+          isCoin
+          rate={170}
+        />
       </div>
     );
   }

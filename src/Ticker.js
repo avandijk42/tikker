@@ -24,37 +24,37 @@ class Ticker extends Component{
     super(props);
     this.state = {}
     this.props.items.forEach( item => {
-      this.state[item] = "?"
+      this.state[item] = "..."
     })
   }
 
   componentDidMount() {
-    console.log(Object.keys(this.state));
-    this.makeApiCall(Object.keys(this.state))
+    // console.log(Object.keys(this.state));
+    this.makeApiCall()
   }
 
-  makeApiCall(symbols){
-    // const req = 'https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol='+symbol+'&apikey=64QGWFNZRACW300X'
-    const req = [
-      'https://api.iextrading.com/1.0/stock/market/',
-      this.props.isCoin ? "crypto/" : "",
-      'batch?symbols=',
-      symbols.join(','),
-      "&types=quote"
-    ].join('')
-    console.log(req)
-    fetch(req)
+  makeApiCall(){
+    // alert(this.state)
+    const symbols = Object.keys(this.state)
+    const isCoin = this.props.isCoin
+    console.log(this.props.query(symbols))
+    fetch(this.props.query(symbols))
       .then(res => res.json())
       .then(
         (result) => {
           var newState = {}
           for (var item in result){
-            newState[item] = {
-              change:result[item].quote.change,
-              price:result[item].quote.latestPrice,
-              companyName:result[item].quote.companyName
+            const symbol = isCoin ? result[item].symbol : item
+            const displaySymbol = isCoin ? symbol.split('USDT')[0] : item
+            const data = isCoin ? result[item] : result[symbol].quote
+
+            newState[displaySymbol] = {
+              change:data.change,
+              price:data.latestPrice,
+              companyName:data.companyName
             }
           }
+
           this.setState(newState)
         },
         (error) => {
@@ -63,25 +63,49 @@ class Ticker extends Component{
           })
         }
       )
+      setTimeout(
+        () => this.makeApiCall(),
+        5000
+      )
+  }
+
+  stockStyle(item){
+    return(
+      item in this.state && this.state[item].change > 0 ?
+        styles.up :
+        this.state[item].change === 0 ?
+          styles.even :
+          styles.down
+    )
   }
 
   render() {
-    // console.log(this.props);
-    const newItems = this.props.items.filter(item => !(item in this.state))
-    console.log(newItems);
-    if (newItems.length > 0){
-      this.makeApiCall(newItems);
-    }
+    // const newItems = this.props.items.filter(item => !(item in this.state))
+    // console.log(newItems);
+    // if (newItems.length > 0){
+    //
+    // }
 
     return (
       <div style={styles.container}>
         <h2 style={styles.title}>{this.props.title} </h2>
         <div style={styles.screen}>
-          <Malarquee>
-            {this.props.items.map(item => (
-              <span>
+          <Malarquee rate={this.props.rate ? this.props.rate : 100}>
+            {Object.keys(this.state).map(item => (
+              <span style={this.stockStyle(item)}>
                 <span style={styles.symbol}>{item}</span>
-                <span style={styles.price}>{item in this.state ? this.state[item].change : "..."} </span>
+                <span style={styles.price}>
+                  {item in this.state ?
+                    this.state[item].change > 0 ?
+                      "^"+this.state[item].change :
+                      "v"+(-1*this.state[item].change) :
+                    "..."}
+                </span>
+
+                <span style={styles.symbol}>{item}</span>
+                <span style={styles.price}>
+                  {item in this.state ? this.state[item].price : "..."}
+                </span>
               </span>
             ))}
           </Malarquee>
@@ -90,28 +114,6 @@ class Ticker extends Component{
     );
   }
 }
-//
-// const Stock = styled.div`
-//   @keyframes scroll-left{
-//     from{
-//       left: ${props => props.xPosition};
-//     }
-//     to {
-//       left: calc(-200px);
-//     }
-//   }
-//   animation: scroll-left 15s infinite linear;
-//   animationDelay: ${props => props.delay};
-//   /* left: ${props => props.xPosition}; */
-//   height: 100%;
-//   width: 200px;
-//   position: relative;
-//   fontSize: 30;
-//   color: black;
-//   background: #8588;
-//   border: 1px solid black;
-// `
-//
 
 export default Ticker;
 
@@ -123,7 +125,8 @@ const styles = {
     width:"100%",
     height:80,
     backgroundColor:"darkgrey",
-    overflowX:"hidden"
+    overflowX:"hidden",
+    top:20,
   },
   stock:{
     animation: "scroll-left 15s infinite linear",
@@ -135,9 +138,23 @@ const styles = {
     color:"black"
   },
   symbol:{
-    margin:"10px 5px 10px 5px",
+    margin:"10px 15px 10px 15px",
+    fontSize:30
   },
   price:{
-    margin:"10px 10px 10px 5px",
+    width: 150,
+    display:"inline-block",
+    // margin:"10px 30px 10px 1px",
+    padding:"0px 20px 0px 0px",
+    fontSize:30
+  },
+  up:{
+    color: "green"
+  },
+  down:{
+    color: "red"
+  },
+  even: {
+    color: "yellow"
   }
 }
