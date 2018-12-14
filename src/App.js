@@ -1,10 +1,7 @@
 import React, { Component } from 'react';
-import logo from './logo.svg';
 import colors from './colorscheme.json';
 import Ticker from "./Ticker";
 import './Ticker.css';
-
-const key = "64QGWFNZRACW300X"
 
 
 class App extends Component {
@@ -12,7 +9,7 @@ class App extends Component {
     super(props);
     this.state = {
       stocks: ["AAPL","GOOG","GE","WFC","NBR","VZ"],
-      coins: ["BTC"]
+      coins: ["BTC", "ETH", "EOS"]
     }
   }
 
@@ -27,7 +24,7 @@ class App extends Component {
       <div>
         <div style={styles.header}>
           <div style={styles.navBar}>
-            <h1 style={styles.title}> > tikker </h1>
+            <h1 style={styles.title}> tikker </h1>
           </div>
           <button id="plus-button" onClick={() => this.addDummyStock()}>
             <div style={styles.buttonSymbolContainer} >
@@ -36,13 +33,13 @@ class App extends Component {
           </button>
         </div>
         <Ticker
-          title="stocks"
+          title="Stocks"
           items={this.state.stocks}
           query={(items) => `https://api.iextrading.com/1.0/stock/market/batch?symbols=${items.join(',')}&types=quote`}
           rate={150}
         />
         <Ticker
-          title="coins"
+          title="Coins"
           items={this.state.coins}
           query={(_) => `https://api.iextrading.com/1.0/stock/market/crypto`}
           isCoin
@@ -74,21 +71,6 @@ const styles = {
     padding:"25px 0px 25px 38px",
     margin:"0px",
     width:200,
-  },
-  button:{
-    borderRadius:"50%",
-    width:70,
-    height:70,
-    backgroundColor:"#f8f8f8",
-    right:50,
-    margin:"-35px 0px 0px 0px",
-    float:"right",
-    position:"relative",
-    boxShadow: "0px 4px 5px #888",
-    verticalAlign:"middle",
-    textAlign:"center",
-    outline:"none",
-    transition:"background-color 1s linear"
   },
   buttonSymbolContainer:{
     margin: 0,

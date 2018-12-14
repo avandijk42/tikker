@@ -12,6 +12,7 @@
   text-align: center;
   outline: none;
   transition: background-color 0.2s linear;
+  border: 2px solid #f0f0f0;
 }
 
 #plus-button:hover{
