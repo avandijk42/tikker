@@ -17,7 +17,7 @@ class Ticker extends Component{
     super(props);
     var tempState = {
       drawerOpen: true,
-      incorrect:false,
+      incorrect:true,
       symbols:{}
     }
     this.props.items.forEach( item => {
@@ -297,6 +297,7 @@ const styles = {
     fontFamily: "Merriweather",
     fontSize: 26,
     overflowY:"hidden",
+    overflowX:"hidden",
   },
   symbol:{
     margin:"10px 20px 0px 0px",
@@ -345,13 +346,14 @@ const styles = {
     paddingLeft:10,
   },
   incorrect: (show) => ({
-    width:300,
+    width:150,
     height:32,
     display:"inline-block",
     margin: "10px 0px -12px 10px",
     fontSize:18,
     color: show ? downColor : downColor + "00",
     transition: "color 0.5s linear",
+    overflowX: "hidden"
   }),
   listItem:{
     width:150,
