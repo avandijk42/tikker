@@ -8,14 +8,15 @@ class App extends Component {
   constructor(props){
     super(props);
     this.state = {
-      stocks: ["AAPL","GOOG","GE","WFC","NBR","VZ"],
-      coins: ["BTC", "ETH", "EOS"]
+      stocks: ["AAPL","GOOG","FB"],
+      coins: ["BTC", "ETH", "EOS"],
+      showHeader: true
     }
   }
 
-  addDummyStock(){
+  minMaxHeader(){
     this.setState((oldState,props) => ({
-      stocks:[...oldState.stocks, "MSFT"]
+      showHeader: !oldState.showHeader
     }))
   }
 
@@ -23,12 +24,12 @@ class App extends Component {
     return (
       <div>
         <div style={styles.header}>
-          <div style={styles.navBar}>
-            <h1 style={styles.title}> tikker </h1>
+          <div style={styles.navBar(this.state.showHeader)}>
+            <h1 style={styles.title(this.state.showHeader)}> tikker </h1>
           </div>
-          <button id="plus-button" onClick={() => this.addDummyStock()}>
-            <div style={styles.buttonSymbolContainer} >
-              +
+          <button id="plus-button" onClick={() => this.minMaxHeader()}>
+            <div style={styles.buttonSymbolContainer(this.state.showHeader)} >
+              {this.state.showHeader ? "\u2227" : "\u2228"}
             </div>
           </button>
         </div>
@@ -55,14 +56,16 @@ export default App;
 
 const styles = {
   header:{
-
+    marginBottom: 100
   },
-  navBar:{
+  navBar: (open) => ({
     backgroundColor:colors.lightGreen,
     width:"100%",
     boxShadow: "0px 3px 7px #888",
-  },
-  title:{
+    marginTop: open ? 0 : -70,
+    transition: "margin-top 0.33s ease-in"
+  }),
+  title: (open) => ({
     fontSize:50,
     fontFamily: "Merriweather",
     fontStyle: "italic",
@@ -71,15 +74,17 @@ const styles = {
     padding:"25px 0px 25px 38px",
     margin:"0px",
     width:200,
-  },
-  buttonSymbolContainer:{
+    color: open ?" #143b29" : "#0000",
+    transition: "color 0.33s ease-in"
+  }),
+  buttonSymbolContainer: (open) => ({
     margin: 0,
     position: "absolute",
     top: "50%",
     left: "50%",
-    transform: "translate(-50%, -50%)",
+    transform: `translate(-50%, -${open ? 60 : 50}%)`,
     fontSize:"40px",
     fontFamily:"Merriweather",
     color:"#666",
-  }
+  })
 }
