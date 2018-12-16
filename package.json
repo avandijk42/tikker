@@ -2,9 +2,10 @@
   "name": "stock-ticker",
   "version": "0.1.0",
   "private": true,
-  "homepage": "http://avandijk42.github.io/tikker",
   "dependencies": {
+    "firebase": "^5.7.0",
     "react": "^16.6.3",
+    "react-cookie": "^3.0.8",
     "react-dom": "^16.6.3",
     "react-malarquee": "0.0.13",
     "react-scripts": "2.1.1",
@@ -14,9 +15,7 @@
     "start": "react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",
-    "eject": "react-scripts eject",
-    "predeploy": "npm run build",
-    "deploy": "gh-pages -d build"
+    "eject": "react-scripts eject"
   },
   "eslintConfig": {
     "extends": "react-app"

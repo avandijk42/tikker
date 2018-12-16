@@ -2,14 +2,16 @@ import React, { Component } from 'react';
 import colors from './colorscheme.json';
 import Ticker from "./Ticker";
 import './Ticker.css';
+import { withCookies, Cookies } from 'react-cookie';
 
 
 class App extends Component {
   constructor(props){
     super(props);
+    const {cookies} = props
     this.state = {
-      stocks: ["AAPL","GOOG","FB"],
-      coins: ["BTC", "ETH", "EOS"],
+      stocks: cookies.get('stocks') || ["AAPL"],
+      coins: cookies.get('coins') || ["BTC"],
       showHeader: true
     }
   }
@@ -38,6 +40,7 @@ class App extends Component {
           items={this.state.stocks}
           query={(items) => `https://api.iextrading.com/1.0/stock/market/batch?symbols=${items.join(',')}&types=quote`}
           rate={150}
+          save={(symbols) => this.props.cookies.set('stocks', symbols)}
         />
         <Ticker
           title="Coins"
@@ -45,14 +48,14 @@ class App extends Component {
           query={(_) => `https://api.iextrading.com/1.0/stock/market/crypto`}
           isCoin
           rate={170}
+          save={(symbols) => this.props.cookies.set('coins', symbols)}
         />
       </div>
     );
   }
 }
 
-// <Ticker title="coins" items={this.state.coins} isCoin/>
-export default App;
+export default withCookies(App);
 
 const styles = {
   header:{
@@ -62,11 +65,11 @@ const styles = {
     backgroundColor:colors.lightGreen,
     width:"100%",
     boxShadow: "0px 3px 7px #888",
-    marginTop: open ? 0 : -70,
+    marginTop: open ? 0 : -60,
     transition: "margin-top 0.33s ease-in"
   }),
   title: (open) => ({
-    fontSize:50,
+    fontSize:40,
     fontFamily: "Merriweather",
     fontStyle: "italic",
     fontWeight:500,

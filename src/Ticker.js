@@ -16,8 +16,8 @@ class Ticker extends Component{
   constructor(props){
     super(props);
     var tempState = {
-      drawerOpen: true,
-      incorrect:true,
+      drawerOpen: false,
+      incorrect: false,
       symbols:{}
     }
     this.props.items.forEach( item => {
@@ -49,12 +49,11 @@ class Ticker extends Component{
             const data = isCoin ? result[item] : result[symbol].quote
             if (data.change === 0) console.log(data);
             newState[displaySymbol] = {
-              change:data.change != null ? (data.change + epsilon).toFixed(2): (epsilon).toFixed(2),
+              change:data.change ? (data.change + epsilon).toFixed(2): (epsilon).toFixed(2),
               price:data.latestPrice,
-              companyName:data.companyName
             }
           }
-
+          this.props.save(Object.keys(newState))
           this.setState({
             symbols:newState
           })
@@ -127,7 +126,8 @@ class Ticker extends Component{
     )
   }
 
-  openEditDrawer() {
+  switchDrawerOpen(e) {
+    e.stopPropagation()
     this.setState((oldState,props) => ({
       drawerOpen: !oldState.drawerOpen
     }))
@@ -147,6 +147,10 @@ class Ticker extends Component{
         this.refs.searchBar.value = ''
         return
       }
+      if (search === undefined || search === ''){
+        alert("empty")
+        return
+      }
       if (!this.props.isCoin){
         fetch(`https://api.iextrading.com/1.0/stock/${search}/quote`)
           .then(res => res.json())
@@ -155,7 +159,10 @@ class Ticker extends Component{
               this.setState((old,props) => ({
                 symbols:{
                   ...old.symbols,
-                  [old.searchBuild]:{}
+                  [search.toUpperCase()]:{
+                    change:result.change ? (result.change + epsilon).toFixed(2): (epsilon).toFixed(2),
+                    price:result.latestPrice,
+                  }
                 },
                 searchBuild:"",
                 incorrect:false
@@ -178,10 +185,14 @@ class Ticker extends Component{
             (result) => {
               console.log(result.map(x => x.symbol.split('USDT')[0]))
               if (result.map(x => x.symbol.split('USDT')[0]).includes(search)){
+                const data = result.filter(x => search === x.symbol.split('USDT')[0])[0]
                 this.setState((old,props) => ({
                   symbols:{
                     ...old.symbols,
-                    [old.searchBuild]:{}
+                    [search.toUpperCase()]:{
+                      change:data.change ? (data.change + epsilon).toFixed(2): (epsilon).toFixed(2),
+                      price:data.latestPrice,
+                    }
                   },
                   searchBuild:"",
                   incorrect:false,
@@ -204,6 +215,7 @@ class Ticker extends Component{
 
   removeItem(item){
     const {[item]:{},...newSymbols} = this.state.symbols
+    this.props.save(Object.keys(newSymbols))
     this.setState({
       symbols:newSymbols
     })
@@ -216,13 +228,14 @@ class Ticker extends Component{
       <div style={styles.container}>
         <div style={{width:"100%"}}>
         <h2 style={styles.title}>
+          <div style={styles.clickCatcher} onClick={(e) => this.switchDrawerOpen(e)}/>
           <span>{this.props.title}</span>
           <span style={{float:"right"}}>
-            <button style={styles.editButton(isOpen)} onClick={() => this.openEditDrawer()}>
+            <button style={styles.editButton(isOpen)} onClick={(e) => this.switchDrawerOpen(e)}>
               <img src={require('./edit.png')} className="edit" style={styles.editImage(isOpen)} />
             </button>
           </span>
-          <div style={styles.drawer(isOpen)}>
+          <div style={styles.drawer(isOpen)} onClick={() => {}}>
             <form>
               <input
                 type="text"
@@ -232,9 +245,9 @@ class Ticker extends Component{
                 style={styles.input}
                 ref="searchBar"
               />
-              <p style={styles.incorrect(this.state.incorrect)}>
+              <div style={styles.incorrect(this.state.incorrect)}>
                 {`${this.props.isCoin ? 'Coin' : 'Stock'} not found.`}
-              </p>
+              </div>
             </form>
             <div style={styles.listContainer}>
               {Object.keys(this.state.symbols).map(item => (
@@ -329,7 +342,7 @@ const styles = {
   }),
   drawer: (isOpen) => ({
     width:"calc(100%+40px)",
-    height:isOpen ? 128 : 0,
+    height:isOpen ? 140 : 0,
     transition:"height 0.33s ease-in, background-color 0.33s ease-in, margin-top 0.33s ease-in",
     backgroundColor: isOpen ? "#E0E3E2" : editButtonPassiveColor,
     padding:"8px 0px",
@@ -339,21 +352,23 @@ const styles = {
   input:{
     margin: "10px 0px 10px 38px",
     height:40,
-    width:300,
+    width:230,
     borderRadius:10,
     border: "1px solid #0004",
     outline: "none",
     paddingLeft:10,
   },
   incorrect: (show) => ({
-    width:150,
-    height:32,
-    display:"inline-block",
+    width: 150,
+    height: show ? 32 : 0,
+    display: "inline-block",
     margin: "10px 0px -12px 10px",
     fontSize:18,
     color: show ? downColor : downColor + "00",
-    transition: "color 0.5s linear",
-    overflowX: "hidden"
+    transition: "height 0.5s linear, color 0.5s linear",
+    overflow: "hidden",
+    textOverflow: "ellipsis",
+    whiteSpace:"no-wrap",
   }),
   listItem:{
     width:150,
@@ -378,8 +393,14 @@ const styles = {
   },
   listContainer:{
     width:"100%",
-    height:68,
+    height:80,
     margin:"0px 0px 0px 38px",
     overflowX: "scroll"
+  },
+  clickCatcher:{
+    position:"absolute",
+    width:"90%",
+    height:36,
+    backgroundColor:"#0000",
   }
 }
