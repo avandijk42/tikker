@@ -2,7 +2,7 @@ import React, { Component } from 'react';
 import colors from './colorscheme.json';
 import Ticker from "./Ticker";
 import './Ticker.css';
-import { withCookies, Cookies } from 'react-cookie';
+import { withCookies } from 'react-cookie';
 
 
 class App extends Component {
@@ -86,7 +86,7 @@ const styles = {
     top: "50%",
     left: "50%",
     transform: `translate(-50%, -${open ? 60 : 50}%)`,
-    fontSize:"40px",
+    fontSize:30,
     fontFamily:"Merriweather",
     color:"#666",
   })

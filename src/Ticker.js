@@ -28,11 +28,20 @@ class Ticker extends Component{
 
   componentDidMount() {
     this.makeApiCall()
+    this.updateWindow()
+    window.addEventListener("resize", () => this.updateWindow())
+  }
+
+  componentWillUnmount() {
+    window.removeEventListener("resize", () => this.updateWindow())
   }
 
   makeApiCall(){
     // alert(this.state)
     const symbols = Object.keys(this.state.symbols)
+    if (symbols.length == 0){
+      return
+    }
     const isCoin = this.props.isCoin
     // console.log(this.props.query(symbols))
     fetch(this.props.query(symbols))
@@ -53,7 +62,8 @@ class Ticker extends Component{
               price:data.latestPrice,
             }
           }
-          this.props.save(Object.keys(newState))
+          // alert(Object.keys(newState))
+          // this.props.save(Object.keys(newState))
           this.setState({
             symbols:newState
           })
@@ -148,7 +158,6 @@ class Ticker extends Component{
         return
       }
       if (search === undefined || search === ''){
-        alert("empty")
         return
       }
       if (!this.props.isCoin){
@@ -156,6 +165,7 @@ class Ticker extends Component{
           .then(res => res.json())
           .then(
             (result) => {
+              this.props.save([...Object.keys(this.state.symbols), search.toUpperCase()])
               this.setState((old,props) => ({
                 symbols:{
                   ...old.symbols,
@@ -183,9 +193,9 @@ class Ticker extends Component{
           .then(res => res.json())
           .then(
             (result) => {
-              console.log(result.map(x => x.symbol.split('USDT')[0]))
-              if (result.map(x => x.symbol.split('USDT')[0]).includes(search)){
-                const data = result.filter(x => search === x.symbol.split('USDT')[0])[0]
+              if (result.map(x => x.symbol.split('USDT')[0]).includes(search.toUpperCase())){
+                const data = result.filter(x => search.toUpperCase() === x.symbol.split('USDT')[0])[0]
+                this.props.save([...Object.keys(this.state.symbols), search.toUpperCase()])
                 this.setState((old,props) => ({
                   symbols:{
                     ...old.symbols,
@@ -221,9 +231,16 @@ class Ticker extends Component{
     })
   }
 
+  updateWindow(){
+    this.setState({
+      windowWidth: window.innerWidth
+    })
+  }
+
   render() {
     const isOpen = this.state.drawerOpen
-    if (this.state.incorrect) console.log("INCORRECT")
+    const symbols = Object.keys(this.state.symbols)
+    const isCoin = this.props.isCoin
     return (
       <div style={styles.container}>
         <div style={{width:"100%"}}>
@@ -235,29 +252,26 @@ class Ticker extends Component{
               <img src={require('./edit.png')} className="edit" style={styles.editImage(isOpen)} />
             </button>
           </span>
-          <div style={styles.drawer(isOpen)} onClick={() => {}}>
+          <div style={styles.drawer(isOpen,symbols.length,this.state.windowWidth)} onClick={() => {}}>
             <form>
               <input
                 type="text"
-                placeholder={`ex. ${this.props.isCoin ? 'BTC' : 'GOOG'}`}
+                placeholder={`ex. ${isCoin ? 'BTC' : 'GOOG'}`}
                 onChange={(e) => this.updateSearchText(e)}
                 onKeyPress={(e) => this.detectSubmit(e)}
                 style={styles.input}
                 ref="searchBar"
               />
               <div style={styles.incorrect(this.state.incorrect)}>
-                {`${this.props.isCoin ? 'Coin' : 'Stock'} not found.`}
+                {`${isCoin ? 'Coin' : 'Stock'} not found.`}
               </div>
             </form>
             <div style={styles.listContainer}>
-              {Object.keys(this.state.symbols).map(item => (
+              {symbols.map(item => (
                 <div style={styles.listItem}>
-                  {Object.keys(this.state.symbols).length > 1 ?
-                    <button onClick={() => this.removeItem(item)} style={styles.remove}>
-                      X
-                    </button> :
-                    <div style={styles.remove} />
-                  }
+                  <button onClick={() => this.removeItem(item)} style={styles.remove}>
+                    X
+                  </button>
                   <div style={{flex:1}}>{item}</div>
                 </div>
               ))}
@@ -267,16 +281,28 @@ class Ticker extends Component{
 
         </div>
         <div style={styles.screen}>
-          <Malarquee rate={this.props.rate ? this.props.rate : 100}>
-            {Object.keys(this.state.symbols).map(item => (
-              this.stock(item)
-            ))}
-          </Malarquee>
+          {Object.keys(this.state.symbols).length > 0 ?
+            <Malarquee rate={this.props.rate ? this.props.rate : 100}>
+              {symbols.map(item => (
+                this.stock(item)
+              ))}
+            </Malarquee> :
+            <div style={styles.nothing(window.innerWidth)}>
+              {`Add some ${isCoin ? 'coin' : 'stock'} symbols by clicking the edit icon to the right`}
+            </div>
+          }
         </div>
       </div>
     );
   }
 }
+
+// {Object.keys(this.state.symbols).length > 1 ?
+//   <button onClick={() => this.removeItem(item)} style={styles.remove}>
+//     X
+//   </button> :
+//   <div style={styles.remove} />
+// }
 
 export default Ticker;
 
@@ -340,9 +366,11 @@ const styles = {
   editImage: (isOpen) => ({
     filter:`brightness(${isOpen ? '4' : '7'}0%)`
   }),
-  drawer: (isOpen) => ({
+  drawer: (isOpen,count,width) => ({
     width:"calc(100%+40px)",
-    height:isOpen ? 140 : 0,
+    height:isOpen ? 70 + (count === 0 ? 0 : (
+      Math.ceil(count / Math.floor((width-40) / 170)) * 62
+    )) : 0,
     transition:"height 0.33s ease-in, background-color 0.33s ease-in, margin-top 0.33s ease-in",
     backgroundColor: isOpen ? "#E0E3E2" : editButtonPassiveColor,
     padding:"8px 0px",
@@ -377,7 +405,7 @@ const styles = {
     borderRadius:5,
     display: "inline-flex",
     alignItems:"center",
-    margin:"7px 20px 0px 0px",
+    margin:"7px 20px 7px 0px",
     fontFamily: "Montserrat",
     fontWeight:"400",
     fontSize:24,
@@ -393,7 +421,7 @@ const styles = {
   },
   listContainer:{
     width:"100%",
-    height:80,
+    bottom:10,
     margin:"0px 0px 0px 38px",
     overflowX: "scroll"
   },
@@ -402,5 +430,17 @@ const styles = {
     width:"90%",
     height:36,
     backgroundColor:"#0000",
-  }
+  },
+  nothing:(screenWidth) => ({
+    verticalAlign:"middle",
+    textAlign:"center",
+    height:"100%",
+    lineHeight:"90px",
+    backgroundColor:"#0001",
+    color:"#0004",
+    fontFamily:"Merriweather",
+    fontWeight:"600",
+    fontSize:screenWidth < 600 ? 14 : 20,
+    textShadow:"1px 1px 0px #fff8",
+  })
 }
