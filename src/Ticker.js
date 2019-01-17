@@ -1,6 +1,5 @@
 import React, { Component } from 'react';
 import Malarquee from 'react-malarquee';
-import colors from './colorscheme.json'
 import './Ticker.css';
 
 
@@ -11,6 +10,7 @@ const editButtonDimension = 30
 const editButtonPassiveColor = "#f4f4f4"
 const editButtonActiveColor = "#B7C2BD"
 const epsilon = 0.00000001
+var apiLoop
 
 class Ticker extends Component{
   constructor(props){
@@ -18,7 +18,7 @@ class Ticker extends Component{
     var tempState = {
       drawerOpen: false,
       incorrect: false,
-      symbols:{}
+      symbols:{},
     }
     this.props.items.forEach( item => {
       tempState.symbols[item] = "..."
@@ -33,17 +33,16 @@ class Ticker extends Component{
   }
 
   componentWillUnmount() {
+    clearTimeout(apiLoop)
     window.removeEventListener("resize", () => this.updateWindow())
   }
 
   makeApiCall(){
-    // alert(this.state)
     const symbols = Object.keys(this.state.symbols)
     if (symbols.length == 0){
       return
     }
     const isCoin = this.props.isCoin
-    // console.log(this.props.query(symbols))
     fetch(this.props.query(symbols))
       .then(res => res.json())
       .then(
@@ -62,8 +61,6 @@ class Ticker extends Component{
               price:data.latestPrice,
             }
           }
-          // alert(Object.keys(newState))
-          // this.props.save(Object.keys(newState))
           this.setState({
             symbols:newState
           })
@@ -74,7 +71,7 @@ class Ticker extends Component{
           })
         }
       )
-      setTimeout(
+      apiLoop = setTimeout(
         () => this.makeApiCall(),
         2500
       )
@@ -296,13 +293,6 @@ class Ticker extends Component{
     );
   }
 }
-
-// {Object.keys(this.state.symbols).length > 1 ?
-//   <button onClick={() => this.removeItem(item)} style={styles.remove}>
-//     X
-//   </button> :
-//   <div style={styles.remove} />
-// }
 
 export default Ticker;
 
