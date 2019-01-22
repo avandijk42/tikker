@@ -1,6 +1,7 @@
 import React, { Component } from 'react';
 import Malarquee from 'react-malarquee';
 import './Ticker.css';
+import {IexStockCaller, IexCoinCaller} from './api/ApiCaller.js'
 
 
 const upColor = "#1a5a31"
@@ -9,7 +10,6 @@ const fontSize = 23
 const editButtonDimension = 30
 const editButtonPassiveColor = "#f4f4f4"
 const editButtonActiveColor = "#B7C2BD"
-const epsilon = 0.00000001
 var apiLoop
 
 class Ticker extends Component{
@@ -39,42 +39,23 @@ class Ticker extends Component{
 
   makeApiCall(){
     const symbols = Object.keys(this.state.symbols)
-    if (symbols.length == 0){
-      return
-    }
-    const isCoin = this.props.isCoin
-    fetch(this.props.query(symbols))
-      .then(res => res.json())
-      .then(
-        (result) => {
-          var newState = {}
-          for (var item in result){
-            const symbol = isCoin ? result[item].symbol : item
-            const displaySymbol = isCoin ? symbol.split('USDT')[0] : item
-            if (isCoin && !(Object.keys(this.state.symbols).includes(displaySymbol))){
-              continue
-            }
-            const data = isCoin ? result[item] : result[symbol].quote
-            if (data.change === 0) console.log(data);
-            newState[displaySymbol] = {
-              change:data.change ? (data.change + epsilon).toFixed(2): (epsilon).toFixed(2),
-              price:data.latestPrice,
-            }
-          }
-          this.setState({
-            symbols:newState
-          })
-        },
-        (error) => {
-          this.setState({
-            ERR:"ERR"
-          })
-        }
-      )
-      apiLoop = setTimeout(
-        () => this.makeApiCall(),
-        2500
-      )
+    if (symbols.length == 0) return;
+    // console.log(symbols)
+    const newState = this.props.isCoin ?
+      IexCoinCaller.makeApiCall(symbols) :
+      IexStockCaller.makeApiCall(symbols)
+
+    // console.log(newState)
+    newState.then(
+      (result) => {this.setState(result)},
+      (err) => {this.setState(err)}
+    )
+    // this.setState(newState)
+    // console.log(this.state)
+    apiLoop = setTimeout(
+      () => this.makeApiCall(),
+      2500
+    )
   }
 
   changeStyle = (item) => {
@@ -89,7 +70,6 @@ class Ticker extends Component{
     }
     return {}
   }
-
 
   arrow(change){
     const arrowStyle = {
@@ -157,64 +137,27 @@ class Ticker extends Component{
       if (search === undefined || search === ''){
         return
       }
-      if (!this.props.isCoin){
-        fetch(`https://api.iextrading.com/1.0/stock/${search}/quote`)
-          .then(res => res.json())
-          .then(
-            (result) => {
-              this.props.save([...Object.keys(this.state.symbols), search.toUpperCase()])
-              this.setState((old,props) => ({
-                symbols:{
-                  ...old.symbols,
-                  [search.toUpperCase()]:{
-                    change:result.change ? (result.change + epsilon).toFixed(2): (epsilon).toFixed(2),
-                    price:result.latestPrice,
-                  }
-                },
-                searchBuild:"",
-                incorrect:false
-              }))
-            },
-            (error) => {
-              this.setState({
-                incorrect: true
-              })
-              setTimeout(
-                () => this.setState({incorrect:false}),
-                3000
-              )
-            }
-          )
+
+      const exists = this.props.isCoin ?
+        IexCoinCaller.checkIfHas(search) :
+        IexStockCaller.checkIfHas(search)
+
+      if (exists){
+        this.props.save([...Object.keys(this.state.symbols), search.toUpperCase()])
+        this.setState((old,_) => ({
+          ...old.symbols,
+          [search.toUpperCase()]: {change:"--", price:"--"},
+          searchBuild: "",
+          incorrect: false
+        }))
       } else {
-        fetch(`https://api.iextrading.com/1.0/stock/market/crypto`)
-          .then(res => res.json())
-          .then(
-            (result) => {
-              if (result.map(x => x.symbol.split('USDT')[0]).includes(search.toUpperCase())){
-                const data = result.filter(x => search.toUpperCase() === x.symbol.split('USDT')[0])[0]
-                this.props.save([...Object.keys(this.state.symbols), search.toUpperCase()])
-                this.setState((old,props) => ({
-                  symbols:{
-                    ...old.symbols,
-                    [search.toUpperCase()]:{
-                      change:data.change ? (data.change + epsilon).toFixed(2): (epsilon).toFixed(2),
-                      price:data.latestPrice,
-                    }
-                  },
-                  searchBuild:"",
-                  incorrect:false,
-                }))
-              } else {
-                this.setState({
-                  incorrect: true
-                })
-                setTimeout(
-                  () => this.setState({incorrect:false}),
-                  3000
-                )
-              }
-            }
-          )
+        this.setState({
+          incorrect: true
+        })
+        setTimeout(
+          () => this.setState({incorrect:false}),
+          3000
+        )
       }
       this.refs.searchBar.value = ''
     }

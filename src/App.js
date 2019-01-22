@@ -42,18 +42,22 @@ class App extends Component {
           rate={150}
           save={(symbols) => this.props.cookies.set('stocks', symbols)}
         />
-        <Ticker
-          title="Coins"
-          items={this.state.coins}
-          query={(_) => `https://api.iextrading.com/1.0/stock/market/crypto`}
-          isCoin
-          rate={170}
-          save={(symbols) => this.props.cookies.set('coins', symbols)}
-        />
+
       </div>
     );
   }
 }
+
+/*
+<Ticker
+  title="Coins"
+  items={this.state.coins}
+  query={(_) => `https://api.iextrading.com/1.0/stock/market/crypto`}
+  isCoin
+  rate={170}
+  save={(symbols) => this.props.cookies.set('coins', symbols)}
+/>
+*/
 
 export default withCookies(App);
 
